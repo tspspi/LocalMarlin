@@ -586,7 +586,7 @@
                                         X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
 */
 // #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
-#define DEFAULT_MAX_ACCELERATION      { 750, 750, 15, 9000 }
+#define DEFAULT_MAX_ACCELERATION      { 750, 750, 30, 9000 }
 
 /**
    Default Acceleration (change/s) change = mm/s
@@ -596,13 +596,13 @@
      M204 R    Retract Acceleration
      M204 T    Travel Acceleration
 */
-#define DEFAULT_ACCELERATION          750    // X, Y, Z and E acceleration for printing moves
+#define DEFAULT_ACCELERATION          400    // X, Y, Z and E acceleration for printing moves; 20201023: 750 -> 300
 #define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
-#define DEFAULT_TRAVEL_ACCELERATION   750    // X, Y, Z acceleration for travel (non printing) moves
+#define DEFAULT_TRAVEL_ACCELERATION   400    // X, Y, Z acceleration for travel (non printing) moves; 20201023: 750 -> 300
 
 /**
    Default Jerk (mm/s)
-   Override with M205 X Y Z E
+BED   Override with M205 X Y Z E
 
    "Jerk" specifies the minimum speed change that requires acceleration.
    When changing speed and direction, if the difference is less than the
@@ -828,7 +828,7 @@
 
 // The size of the print bed
 #define X_BED_SIZE 115 /* 114 */
-#define Y_BED_SIZE 155 /* 92 */ /* 205 -> 150 @ 20191108 */ /* -> gradually 180, 165, 155 @ 20201010; Linited because of Y forces (skipping) ... */
+#define Y_BED_SIZE 160 /* 92 */ /* 205 -> 150 @ 20191108 */ /* -> gradually 180, 165, 155 @ 20201010; Linited because of Y forces (skipping) ...; 20201024: 180 */
 
 // Travel limits (mm) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0 /* 19 */
@@ -957,8 +957,8 @@
 #if ENABLED(AUTO_BED_LEVELING_LINEAR) || ENABLED(AUTO_BED_LEVELING_BILINEAR)
 
 // Set the number of grid points per dimension.
-#define GRID_MAX_POINTS_X 5 /* 5 */ /* TSP201909919: 10 -> 5 */
-#define GRID_MAX_POINTS_Y 10 /* 5 */ /* TSP201909919: 15 -> 5 */
+#define GRID_MAX_POINTS_X 2 /* 5 */ /* TSP201909919: 10 -> 5; 20201020 > 4 */
+#define GRID_MAX_POINTS_Y 4 /* 5 */ /* TSP201909919: 15 -> 5 */
 
 // Set the boundaries for probing (where the probe can reach).
 /* #define LEFT_PROBE_BED_POSITION 20
@@ -972,8 +972,8 @@
   #define BACK_PROBE_BED_POSITION  (Y_BED_SIZE-1)
 */
 // TSP 20190916
-#define LEFT_PROBE_BED_POSITION  0
-#define RIGHT_PROBE_BED_POSITION X_BED_SIZE-1
+#define LEFT_PROBE_BED_POSITION  (X_BED_SIZE-1)/2
+#define RIGHT_PROBE_BED_POSITION (X_BED_SIZE-1)
 #define FRONT_PROBE_BED_POSITION 7
 #define BACK_PROBE_BED_POSITION  Y_BED_SIZE-1		/* TSP 20191014 - Added -40 to compensate probe offset (used as gate for piezo probe) */
 
@@ -1094,11 +1094,13 @@
 #if ENABLED(Z_SAFE_HOMING)
 #define Z_SAFE_HOMING_X_POINT ((X_BED_SIZE) / 2)    // X point for Z homing when homing all axes (G28).
 #define Z_SAFE_HOMING_Y_POINT ((Y_BED_SIZE) / 2)    // Y point for Z homing when homing all axes (G28).
+//  #define Z_SAFE_HOMING_X_POINT 10    // X point for Z homing when homing all axes (G28).
+// #define Z_SAFE_HOMING_Y_POINT 10    // Y point for Z homing when homing all axes (G28).
 #endif
 
 // Homing speeds (mm/m)
 #define HOMING_FEEDRATE_XY (450)
-#define HOMING_FEEDRATE_Z  1.5*(2*60)
+#define HOMING_FEEDRATE_Z  1.5*(2*60*2*2)
 
 // @section calibrate
 
