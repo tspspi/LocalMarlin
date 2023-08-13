@@ -577,7 +577,7 @@
                                         X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
 */
 // #define DEFAULT_MAX_FEEDRATE          { 300, 300, 5, 25 }  // TSP
-#define DEFAULT_MAX_FEEDRATE          { 100, 100, 2, 25 }
+#define DEFAULT_MAX_FEEDRATE          { 100, 100, 4, 25 }
 
 /**
    Default Max Acceleration (change/s) change = mm/s
@@ -668,7 +668,7 @@ BED   Override with M205 X Y Z E
    A Fix-Mounted Probe either doesn't deploy or needs manual deployment.
      (e.g., an inductive probe or a nozzle-based probe-switch.)
 */
-#define FIX_MOUNTED_PROBE
+/*#define FIX_MOUNTED_PROBE*/ /* My default probe if not using BLTouch (TSP) */
 
 /**
    Z Servo Probe, such as an endstop switch on a rotating arm.
@@ -679,9 +679,11 @@ BED   Override with M205 X Y Z E
 /**
    The BLTouch probe uses a Hall effect sensor and emulates a servo.
 */
-//#define BLTOUCH
+#ifndef FIX_MOUNTED_PROBE
+   #define BLTOUCH
+#endif
 #if ENABLED(BLTOUCH)
-//#define BLTOUCH_DELAY 375   // (ms) Enable and increase if needed
+   #define BLTOUCH_DELAY 500   // (ms) Enable and increase if needed
 #endif
 
 /**
@@ -730,9 +732,15 @@ BED   Override with M205 X Y Z E
 // #define Z_PROBE_OFFSET_FROM_EXTRUDER -0.7   // Z offset: -below +above  [the nozzle]
 
 // Move to touch probe (TSP 20190916)
-#define X_PROBE_OFFSET_FROM_EXTRUDER	0
-#define Y_PROBE_OFFSET_FROM_EXTRUDER	0
-#define Z_PROBE_OFFSET_FROM_EXTRUDER	0
+#if ENABLED(BLTOUCH)
+   #define X_PROBE_OFFSET_FROM_EXTRUDER	0
+   #define Y_PROBE_OFFSET_FROM_EXTRUDER	49
+   #define Z_PROBE_OFFSET_FROM_EXTRUDER	-2.3
+#else
+   #define X_PROBE_OFFSET_FROM_EXTRUDER	0
+   #define Y_PROBE_OFFSET_FROM_EXTRUDER	0
+   #define Z_PROBE_OFFSET_FROM_EXTRUDER	0
+#endif
 
 // X and Y axis travel speed (mm/m) between probes
 #define XY_PROBE_SPEED HOMING_FEEDRATE_XY
@@ -762,12 +770,17 @@ BED   Override with M205 X Y Z E
    Example: `M851 Z-5` with a CLEARANCE of 4  =>  9mm from bed to nozzle.
        But: `M851 Z+1` with a CLEARANCE of 2  =>  2mm from bed to nozzle.
 */
-#define Z_CLEARANCE_DEPLOY_PROBE   1 // Z Clearance for Deploy/Stow
-#define Z_CLEARANCE_BETWEEN_PROBES  2 // Z Clearance between probe points // TSP 20190916 from 1->2
+#if ENABLED(BLTOUCH)
+   #define Z_CLEARANCE_DEPLOY_PROBE 15
+   #define Z_CLEARANCE_BETWEEN_PROBES 5
+#else
+   #define Z_CLEARANCE_DEPLOY_PROBE   1 // Z Clearance for Deploy/Stow
+   #define Z_CLEARANCE_BETWEEN_PROBES  2 // Z Clearance between probe points // TSP 20190916 from 1->2
+#endif
 
 // For M851 give a range for adjusting the Z probe offset
-#define Z_PROBE_OFFSET_RANGE_MIN -20
-#define Z_PROBE_OFFSET_RANGE_MAX 20
+#define Z_PROBE_OFFSET_RANGE_MIN -40
+#define Z_PROBE_OFFSET_RANGE_MAX 40
 
 // Enable the M48 repeatability test to test probe accuracy
 #define Z_MIN_PROBE_REPEATABILITY_TEST
@@ -957,8 +970,8 @@ BED   Override with M205 X Y Z E
 #if ENABLED(AUTO_BED_LEVELING_LINEAR) || ENABLED(AUTO_BED_LEVELING_BILINEAR)
 
 // Set the number of grid points per dimension.
-#define GRID_MAX_POINTS_X 2 /* 5 */ /* TSP201909919: 10 -> 5; 20201020 > 4 */
-#define GRID_MAX_POINTS_Y 4 /* 5 */ /* TSP201909919: 15 -> 5 */
+#define GRID_MAX_POINTS_X 4 /* 5 */ /* TSP201909919: 10 -> 5; 20201020 > 4 */
+#define GRID_MAX_POINTS_Y 8 /* 5 */ /* TSP201909919: 15 -> 5 */
 
 // Set the boundaries for probing (where the probe can reach).
 /* #define LEFT_PROBE_BED_POSITION 20
@@ -972,10 +985,17 @@ BED   Override with M205 X Y Z E
   #define BACK_PROBE_BED_POSITION  (Y_BED_SIZE-1)
 */
 // TSP 20190916
-#define LEFT_PROBE_BED_POSITION  (X_BED_SIZE-1)/2
-#define RIGHT_PROBE_BED_POSITION (X_BED_SIZE-1)
-#define FRONT_PROBE_BED_POSITION 7
-#define BACK_PROBE_BED_POSITION  Y_BED_SIZE-1		/* TSP 20191014 - Added -40 to compensate probe offset (used as gate for piezo probe) */
+#ifndef BLTOUCH
+   #define LEFT_PROBE_BED_POSITION  (X_BED_SIZE-1)/2
+   #define RIGHT_PROBE_BED_POSITION (X_BED_SIZE-1)
+   #define FRONT_PROBE_BED_POSITION 7
+   #define BACK_PROBE_BED_POSITION  Y_BED_SIZE-1		/* TSP 20191014 - Added -40 to compensate probe offset (used as gate for piezo probe) */
+#else
+   #define LEFT_PROBE_BED_POSITION  10
+   #define RIGHT_PROBE_BED_POSITION (X_BED_SIZE-1)
+   #define FRONT_PROBE_BED_POSITION 49
+   #define BACK_PROBE_BED_POSITION  Y_BED_SIZE-1		/* TSP 20191014 - Added -40 to compensate probe offset (used as gate for piezo probe) */
+#endif
 
 // The Z probe minimum outer margin (to validate G29 parameters).
 #define MIN_PROBE_EDGE 0
@@ -1041,7 +1061,7 @@ BED   Override with M205 X Y Z E
 //===========================================================================
 
 #define MESH_INSET 10          // Mesh inset margin on print area
-#define GRID_MAX_POINTS_X 3    // Don't use more than 7 points per axis, implementation limited.
+#define GRID_MAX_POINTS_X 5    // Don't use more than 7 points per axis, implementation limited.
 #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
 
 //#define MESH_G28_REST_ORIGIN // After homing all axes ('G28' or 'G28 XYZ') rest Z at Z_MIN_POS
@@ -1100,7 +1120,7 @@ BED   Override with M205 X Y Z E
 
 // Homing speeds (mm/m)
 #define HOMING_FEEDRATE_XY (450)
-#define HOMING_FEEDRATE_Z  1.5*(2*60*2*2)
+#define HOMING_FEEDRATE_Z  1.5*(2*60*2*2)*32
 
 // @section calibrate
 
@@ -1819,6 +1839,9 @@ BED   Override with M205 X Y Z E
    Leave undefined or set to 0 to entirely disable the servo subsystem.
 */
 //#define NUM_SERVOS 3 // Servo index starts with 0 for M280 command
+#ifdef BLTOUCH
+   #define NUM_SERVOS 1
+#endif
 
 // Delay (in milliseconds) before the next move will start, to give the servo time to reach its target angle.
 // 300ms is a good value but you can try less delay.
