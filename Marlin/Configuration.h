@@ -39,6 +39,8 @@
 #define CONFIGURATION_H
 #define CONFIGURATION_H_VERSION 010107
 
+#define DEBUG_LEVELING_FEATURE
+
 //===========================================================================
 //============================= Getting Started =============================
 //===========================================================================
@@ -754,7 +756,7 @@ BED   Override with M205 X Y Z E
 // The number of probes to perform at each point.
 //   Set to 2 for a fast/slow probe, using the second probe result.
 //   Set to 3 or more for slow probes, averaging the results.
-#define MULTIPLE_PROBING 4 /* TSP 20190916 - From 4 */
+#define MULTIPLE_PROBING 9 /* TSP 20190916 - From 4 */
 
 /**
    Z probes require clearance when deploying, stowing, and moving between
@@ -971,7 +973,7 @@ BED   Override with M205 X Y Z E
 
 // Set the number of grid points per dimension.
 #define GRID_MAX_POINTS_X 4 /* 5 */ /* TSP201909919: 10 -> 5; 20201020 > 4 */
-#define GRID_MAX_POINTS_Y 8 /* 5 */ /* TSP201909919: 15 -> 5 */
+#define GRID_MAX_POINTS_Y 4 /* 5 */ /* TSP201909919: 15 -> 5 */
 
 // Set the boundaries for probing (where the probe can reach).
 /* #define LEFT_PROBE_BED_POSITION 20

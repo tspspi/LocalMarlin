@@ -2172,6 +2172,13 @@ static void clean_up_after_endstop_or_probe_move() {
 
     // Deploy BLTouch at the start of any probe
     #if ENABLED(BLTOUCH)
+      /* Quick bugfix: Reset the BLTouch before every move since it
+        has the tendency to go into error state ... TSP Modification */
+
+      safe_delay(500);
+      bltouch_command(BLTOUCH_RESET);
+      safe_delay(1500);
+
       if (set_bltouch_deployed(true)) return true;
     #endif
 
@@ -2223,6 +2230,7 @@ static void clean_up_after_endstop_or_probe_move() {
    * @return The raw Z position where the probe was triggered
    */
   static float run_z_probe() {
+    // do_blocking_move_to_z(current_position[Z_AXIS] + Z_CLEARANCE_DEPLOY_PROBE, MMM_TO_MMS(Z_PROBE_SPEED_FAST));
 
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING)) DEBUG_POS(">>> run_z_probe", current_position);
@@ -2262,23 +2270,58 @@ static void clean_up_after_endstop_or_probe_move() {
     #endif
 
     #if MULTIPLE_PROBING > 2
-      float probes_total = 0;
-      for (uint8_t p = MULTIPLE_PROBING + 1; --p;) {
+      /*
+        TSP Modification:
+          Before doing average exclude outliers
+      */
+      float probe_values[MULTIPLE_PROBING];
+      for(uint8_t p = 0; p < MULTIPLE_PROBING; p=p+1) {
+      //float probes_total = 0;
+      //for (uint8_t p = MULTIPLE_PROBING + 1; --p;) {
     #endif
 
         // move down slowly to find bed
         if (do_probe_move(-10, Z_PROBE_SPEED_SLOW)) return NAN;
 
     #if MULTIPLE_PROBING > 2
-        probes_total += current_position[Z_AXIS];
-        if (p > 1) do_blocking_move_to_z(current_position[Z_AXIS] + Z_CLEARANCE_BETWEEN_PROBES, MMM_TO_MMS(Z_PROBE_SPEED_FAST));
+        //probes_total += current_position[Z_AXIS];
+        probe_values[p] = current_position[Z_AXIS];
+        if (p < MULTIPLE_PROBING-1) {
+          do_blocking_move_to_z(current_position[Z_AXIS] + Z_CLEARANCE_BETWEEN_PROBES, MMM_TO_MMS(Z_PROBE_SPEED_FAST));
+        }
       }
     #endif
 
     #if MULTIPLE_PROBING > 2
 
       // Return the average value of all probes
-      return probes_total * (1.0 / (MULTIPLE_PROBING));
+      //return probes_total * (1.0 / (MULTIPLE_PROBING));
+      /*
+        Sort them using bubblesort ...
+      */
+      uint8_t bDone = 0;
+      while(bDone == 0) {
+        bDone = 1;
+        for(uint8_t p = 0; p < MULTIPLE_PROBING-1; p=p+1) {
+          if(probe_values[p] > probe_values[p+1]) {
+            float tmp;
+            tmp = probe_values[p];
+            probe_values[p] = probe_values[p+1];
+            probe_values[p+1] = tmp;
+            bDone = 0;
+          }
+        }
+      }
+      /*
+        Now use only the inner quartiles for averaging (or rather the 1/3 in the middle)
+      */
+      float probes_total = 0;
+      uint8_t n = 0;
+      for(uint8_t p = (MULTIPLE_PROBING/3); p < MULTIPLE_PROBING - (MULTIPLE_PROBING / 3); p=p+1) {
+        probes_total = probes_total + probe_values[p];
+        n = n + 1;
+      }
+      return probes_total * (1.0 / (n));
 
     #elif MULTIPLE_PROBING == 2
 
@@ -2340,7 +2383,7 @@ static void clean_up_after_endstop_or_probe_move() {
         // Move below clip height or xy move will be aborted by do_blocking_move_to
         min(current_position[Z_AXIS], delta_clip_start_height)
       #else
-        current_position[Z_AXIS]
+        current_position[Z_AXIS];
       #endif
     ;
 
